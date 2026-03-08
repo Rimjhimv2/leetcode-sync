@@ -1,89 +1,238 @@
-# LeetSync — LeetCode → GitHub Chrome Extension
+# 🔄 LeetSync — LeetCode × GitHub Sync
 
-Automatically sync your accepted LeetCode solutions to a GitHub repository the moment you solve a problem.
+> A Chrome Extension that automatically syncs your accepted LeetCode solutions to GitHub the moment you hit "Accepted" — no manual copying, no forgetting to commit.
 
-## Features
+![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-blue?logo=googlechrome)
+![Manifest V3](https://img.shields.io/badge/Manifest-V3-green)
+![Vanilla JS](https://img.shields.io/badge/Vanilla-JS-yellow)
+![License](https://img.shields.io/badge/License-MIT-purple)
 
-- **Auto-sync on Accept** — detects when your submission is accepted and pushes to GitHub instantly
-- **Organized file structure** — solutions sorted by language with a commented header (title, difficulty, date, tags)
-- **Stats dashboard** — track Easy / Medium / Hard counts and top language
-- **Sync history** — see the last 20 synced problems in the popup
-- **Toast notifications** — subtle in-page toast confirming each sync
+---
 
-## File Structure in Your Repo
+## ✨ Features
+
+- ✅ **Auto-detects** accepted submissions on LeetCode
+- 📁 **Organized structure** — each problem gets its own folder
+- 📝 **README per problem** — full description, examples & constraints
+- 💻 **Full code sync** — fetches complete code via LeetCode API
+- 🔁 **Smart duplicate detection** — only syncs when code actually changes
+- 📊 **Stats dashboard** — track Easy/Medium/Hard count in popup
+- 🔔 **Toast notifications** — in-page confirmation on every sync
+- 🌐 **Multi-language support** — C++, Python, Java, JavaScript and more
+
+---
+
+## 📂 GitHub Folder Structure
+
+After syncing, your repo will look like this:
 
 ```
-solutions/
-  python/
-    two-sum.py
-    longest-substring-without-repeating-characters.py
-  javascript/
-    valid-parentheses.js
-  cpp/
-    reverse-linked-list.cpp
+your-repo/
+  solutions/
+    1-two-sum/
+      two-sum.cpp          ← Full solution with header comment
+      README.md            ← Problem description, examples, constraints
+    29-divide-two-integers/
+      divide-two-integers.cpp
+      README.md
+    35-search-insert-position/
+      search-insert-position.cpp
+      README.md
 ```
 
-Each file includes a header comment:
-```python
-# Problem: Two Sum
-# URL: https://leetcode.com/problems/two-sum/
-# Difficulty: Easy
-# Language: Python
-# Date: 2025-03-07
-# Tags: Array, Hash Table
-# Synced by LeetSync Chrome Extension
+### Sample `.cpp` file:
+```cpp
+// Problem: 1. Two Sum
+// URL: https://leetcode.com/problems/two-sum/
+// Difficulty: Easy
+// Language: C++
+// Date: 2026-03-07
+// Tags: Array, Hash Table
+// Synced by LeetSync Chrome Extension
 
-class Solution:
-    def twoSum(self, nums, target):
-        ...
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        // your solution here
+    }
+};
 ```
 
-## Installation
+### Sample `README.md`:
+```markdown
+# 1. Two Sum
+![Easy](https://img.shields.io/badge/Difficulty-Easy-brightgreen)
 
-### 1. Create a GitHub repo
-Create a new repo (e.g. `yourname/leetcode-solutions`). It can be private.
+**LeetCode:** https://leetcode.com/problems/two-sum/
+**Date Solved:** 2026-03-07
+**Language:** C++
 
-### 2. Generate a GitHub token
-1. Go to **GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)**
-2. Click **Generate new token**
-3. Give it `repo` scope (full control of private repositories)
-4. Copy the token — you'll only see it once
+## Problem Description
+Given an array of integers nums and an integer target...
 
-### 3. Load the extension in Chrome
-1. Open Chrome and go to `chrome://extensions`
-2. Enable **Developer mode** (top right toggle)
-3. Click **Load unpacked**
-4. Select this `leetcode-sync` folder
+## Examples
+Input: nums = [2,7,11,15], target = 9
+Output: [0,1]
 
-### 4. Configure LeetSync
-1. Click the LeetSync icon in your toolbar
-2. Go to the **Settings** tab
-3. Paste your GitHub token
-4. Enter your repo as `username/repo-name`
-5. Set the branch (default: `main`) and optional subfolder
-6. Click **Save & Test Connection**
+## Constraints
+- 2 <= nums.length <= 10^4
+- Only one valid answer exists.
 
-You're done! Solve a problem on LeetCode and watch it appear in your repo.
+## Topics
+`Array` `Hash Table`
+```
 
-## Manual Sync
+---
 
-If auto-sync is off, you can trigger a sync from the popup manually (coming in v1.1).
+## 🚀 Installation
 
-## Supported Languages
+### Step 1 — Download the extension
+Download and unzip the `leetcode-sync` folder.
 
-Python, JavaScript, TypeScript, Java, C++, C, C#, Go, Rust, Swift, Kotlin, Ruby, PHP, Scala, R
+### Step 2 — Load in Chrome
+1. Open Chrome → go to `chrome://extensions`
+2. Enable **Developer Mode** (top-right toggle)
+3. Click **"Load unpacked"**
+4. Select the `leetcode-sync` folder
 
-## Permissions Used
+### Step 3 — Generate GitHub Token
+1. Go to **GitHub → Settings → Developer Settings → Personal Access Tokens → Tokens (classic)**
+2. Click **"Generate new token (classic)"**
+3. Give it a name: `LeetSync`
+4. Check the **`repo`** scope ✅
+5. Click **"Generate token"** and copy it immediately
 
-| Permission | Reason |
+### Step 4 — Configure LeetSync
+1. Click the **LeetSync icon** in Chrome toolbar
+2. Go to **Settings** tab
+3. Fill in:
+   - **GitHub Token** → paste your token
+   - **Repository** → `yourusername/your-repo` (e.g. `Rimjhimv2/dsa-leetcode`)
+   - **Branch** → `main`
+   - **Folder** → `solutions` (optional)
+4. Click **"Save & Test Connection"**
+
+You're all set! 🎉
+
+---
+
+## 🧠 How It Works
+
+```
+LeetCode Page          content.js            background.js         GitHub API
+     │                     │                      │                     │
+     │  Submit solution     │                      │                     │
+     │ ─────────────────>   │                      │                     │
+     │                      │  Poll every 3s       │                     │
+     │                      │  "Accepted?" ✅      │                     │
+     │                      │                      │                     │
+     │                      │  Fetch code + details│                     │
+     │                      │  via LeetCode API    │                     │
+     │                      │                      │                     │
+     │                      │  Hash check          │                     │
+     │                      │  (same code? skip)   │                     │
+     │                      │                      │                     │
+     │                      │ ── SYNC_SOLUTION ──> │                     │
+     │                      │                      │  GET file SHA ───>  │
+     │                      │                      │  PUT .cpp file ──>  │
+     │                      │                      │  PUT README.md ──>  │
+     │                      │                      │ <── committed ───   │
+     │                      │ <── success ──────── │                     │
+     │   Toast: ✅ Synced!   │                      │                     │
+```
+
+---
+
+## ⚙️ Tech Stack
+
+| Technology | Purpose |
 |---|---|
-| `storage` | Save your GitHub token and settings locally |
-| `tabs` | Detect when you're on a LeetCode problem page |
-| `scripting` | Inject the submission detector into LeetCode |
-| `notifications` | Show sync confirmation notifications |
-| `https://leetcode.com/*` | Read problem data and detect submissions |
-| `https://api.github.com/*` | Push files to your GitHub repo |
+| **Chrome Extension Manifest V3** | Extension framework |
+| **Vanilla JavaScript** | No dependencies, lightweight |
+| **LeetCode GraphQL API** | Fetch problem details + submission code |
+| **GitHub Contents REST API** | Create/update files in repo |
+| **Chrome Storage API** | Save settings & stats locally |
+| **Service Worker** | Background sync processing |
 
-## Privacy
+---
 
-Your GitHub token is stored locally in Chrome's `storage.sync` and never sent anywhere except the official GitHub API (`api.github.com`).
+## 📁 Project Structure
+
+```
+leetcode-sync/
+  manifest.json          ← Extension config (permissions, scripts)
+  popup.html             ← Extension popup UI
+  icons/
+    icon16.png
+    icon48.png
+    icon128.png
+  src/
+    content.js           ← Injected into LeetCode, detects submissions
+    background.js        ← Service worker, handles GitHub API calls
+    popup.js             ← Popup UI logic (stats, settings)
+```
+
+---
+
+## 🔒 Permissions Used
+
+| Permission | Why |
+|---|---|
+| `storage` | Save GitHub token and settings |
+| `tabs` | Detect LeetCode problem pages |
+| `scripting` | Inject content script |
+| `notifications` | Show sync confirmation |
+| `https://leetcode.com/*` | Read problem data |
+| `https://api.github.com/*` | Push files to GitHub |
+
+> **Privacy:** Your GitHub token is stored locally in Chrome's `storage.sync` and is only ever sent to `api.github.com`. Nothing is collected or shared.
+
+---
+
+## 🛠️ Development
+
+### File responsibilities:
+
+**`content.js`** — The "spy" on LeetCode
+- Polls every 3 seconds for "Accepted" result
+- Detects submission ID from URL
+- Fetches full code + language from LeetCode GraphQL API
+- Hashes code to detect changes (avoids duplicate syncs)
+- Sends data to background.js via `chrome.runtime.sendMessage`
+
+**`background.js`** — The "manager" in the background
+- Receives sync requests from content.js
+- Builds file paths and content
+- Calls GitHub API to commit `.cpp` + `README.md`
+- Tracks stats in Chrome local storage
+
+**`popup.js`** — The dashboard
+- Shows Easy/Medium/Hard stats
+- Shows recent sync history
+- Manages GitHub settings
+
+---
+
+## ❓ FAQ
+
+**Q: Will it sync every time I submit?**
+A: No — it only syncs when your code actually changes. Same code submitted again = skipped.
+
+**Q: What if I update my solution later?**
+A: Just submit the updated code on LeetCode. If it's Accepted and different from last sync, it will sync automatically.
+
+**Q: Does it work with private repos?**
+A: Yes! As long as your token has `repo` scope.
+
+**Q: Which LeetCode account does it work with?**
+A: Any — it reads from the active LeetCode session in your browser.
+
+---
+
+## 📄 License
+
+MIT License — feel free to use, modify, and share!
+
+---
+
+*Built with ❤️ by [@Rimjhimv](https://github.com/Rimjhimv2)*
