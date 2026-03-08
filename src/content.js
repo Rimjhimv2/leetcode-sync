@@ -5,7 +5,6 @@
   "use strict";
 
   let pollInterval = null;
-  const lastSyncedCodeHash = {};
 
   function init() {
     let lastUrl = location.href;
@@ -46,7 +45,6 @@
     if (!slugMatch) return;
     const problemSlug = slugMatch[1];
 
-    // ✅ Get submission ID from URL if available
     const submissionMatch = location.href.match(/\/submissions\/(\d+)/);
     const submissionId = submissionMatch ? submissionMatch[1] : null;
 
@@ -67,22 +65,39 @@
       const payload = await extractProblemData(problemSlug, submissionId);
       if (!payload) { startPolling(); return; }
 
-      // ✅ Hash check — block if same code
+      // ✅ FIX: Hash stored in Chrome storage — persists across extension reloads!
       const currentHash = simpleHash(payload.code);
-      if (lastSyncedCodeHash[problemSlug] === currentHash) {
-        console.log("[LeetSync] Code unchanged, skipping.");
+      const storageKey = `hash_${payload.problemSlug}`;
+
+      const stored = await new Promise(resolve =>
+        chrome.storage.local.get([storageKey], resolve)
+      );
+
+      if (stored[storageKey] === currentHash) {
+        console.log("[LeetSync] Code unchanged (persistent check), skipping.");
         startPolling();
         return;
       }
-      lastSyncedCodeHash[problemSlug] = currentHash;
+
+      // Save new hash immediately before syncing
+      await new Promise(resolve =>
+        chrome.storage.local.set({ [storageKey]: currentHash }, resolve)
+      );
 
       showToast("🔄 LeetSync: Syncing to GitHub...", "info");
 
       chrome.runtime.sendMessage({ type: "SYNC_SOLUTION", payload }, (response) => {
-        if (chrome.runtime.lastError) { startPolling(); return; }
+        if (chrome.runtime.lastError) {
+          // ✅ On error, remove saved hash so retry is possible
+          chrome.storage.local.remove([storageKey]);
+          startPolling();
+          return;
+        }
         if (response?.success) {
           showToast(`✅ LeetSync: Synced!`, "success", response.result?.commitUrl);
         } else {
+          // Remove hash on failure so user can retry
+          chrome.storage.local.remove([storageKey]);
           showToast(`❌ LeetSync: ${response?.error || "Sync failed"}`, "error");
         }
         startPolling();
@@ -98,7 +113,6 @@
     let apiDescription, apiExamples, apiConstraints;
     let submissionCode = "", submissionLang = "";
 
-    // ✅ FIX 1: Fetch submission details from LeetCode API to get FULL code + language
     if (submissionId) {
       try {
         const res = await fetch("https://leetcode.com/graphql", {
@@ -125,7 +139,6 @@
       }
     }
 
-    // ✅ FIX 2: Fetch problem details including full description
     try {
       const res = await fetch("https://leetcode.com/graphql", {
         method: "POST",
@@ -159,17 +172,11 @@
       console.warn("[LeetSync] Problem fetch failed", e);
     }
 
-    // Fallbacks
     const title = apiTitle || slugToTitle(problemSlug);
     const difficulty = apiDifficulty || "Unknown";
     const tags = apiTags || [];
-
-    // ✅ FIX 3: Language — use submission API result, fallback to DOM
     const language = submissionLang || detectLanguageFromDOM();
-
-    // ✅ FIX 4: Code — use submission API (full code), fallback to DOM
     const code = submissionCode || extractCodeFromDOM();
-
     const numberedSlug = problemNumber ? `${problemNumber}-${problemSlug}` : problemSlug;
 
     return {
@@ -224,10 +231,6 @@
       const el = document.querySelector(sel);
       if (el?.textContent?.trim().length < 20) return el.textContent.trim();
     }
-    // ✅ "Code | C++" label near submission result
-    const langLabel = document.querySelector('[class*="lang"], [class*="language-"]');
-    if (langLabel) return langLabel.textContent.trim();
-
     const match = document.body.innerText.match(
       /Code\s*[|｜]\s*(C\+\+|Python3?|Java(?!Script)|JavaScript|TypeScript|Go|Rust|Swift|Kotlin|Ruby|PHP|C#|C\b|Scala)/
     );
